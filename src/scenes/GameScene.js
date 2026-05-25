@@ -143,7 +143,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   onHover(pointer) {
-    if (pointer.x >= PLAY_W) { this.hoverGfx.clear(); return; }
+    if (pointer.x >= PLAY_W) { this.hoverGfx.clear(); this.input.setDefaultCursor('default'); return; }
     const col = Math.floor(pointer.x / CELL);
     const row = Math.floor(pointer.y / CELL);
     if (col < 0 || col >= COLS || row < 0 || row >= ROWS) { this.hoverGfx.clear(); return; }
@@ -168,7 +168,12 @@ export default class GameScene extends Phaser.Scene {
       this.hoverGfx.strokeRect(col * CELL, row * CELL, CELL, CELL);
     } else {
       const hovered = this.towers.find(t => t.col === col && t.row === row);
-      if (hovered) hovered.showRange(true);
+      if (hovered) {
+        hovered.showRange(true);
+        this.input.setDefaultCursor('pointer');
+      } else {
+        this.input.setDefaultCursor('default');
+      }
     }
   }
 
@@ -178,18 +183,21 @@ export default class GameScene extends Phaser.Scene {
     const row = Math.floor(pointer.y / CELL);
     if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
 
-    if (this.selectedTowerType) {
-      if (!this.isBlocked(col, row)) {
-        const cost = TOWERS[this.selectedTowerType].cost;
-        if (this.credits < cost) return;
-        this.credits -= cost;
-        this.towers.push(new Tower(this, col, row, this.selectedTowerType));
-        this.pushStats();
-      }
+    const existing = this.towers.find(t => t.col === col && t.row === row) || null;
+
+    if (existing) {
+      // Always show popup when clicking a placed tower
+      this.selectedTower = existing;
+      this.game.events.emit('towerSelect', existing);
+    } else if (this.selectedTowerType && !this.pathCells.has(`${col},${row}`)) {
+      const cost = TOWERS[this.selectedTowerType].cost;
+      if (this.credits < cost) return;
+      this.credits -= cost;
+      this.towers.push(new Tower(this, col, row, this.selectedTowerType));
+      this.pushStats();
     } else {
-      const tower = this.towers.find(t => t.col === col && t.row === row) || null;
-      this.selectedTower = tower;
-      this.game.events.emit('towerSelect', tower);
+      this.selectedTower = null;
+      this.game.events.emit('towerSelect', null);
     }
   }
 
