@@ -152,7 +152,16 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.selectedTowerType) {
       const ok = !this.isBlocked(col, row);
-      this.hoverGfx.fillStyle(ok ? 0x00ff00 : 0xff0000, 0.2);
+      const cx = col * CELL + CELL / 2;
+      const cy = row * CELL + CELL / 2;
+      const towerDef = TOWERS[this.selectedTowerType];
+      // range preview circle
+      this.hoverGfx.fillStyle(towerDef.color, 0.07);
+      this.hoverGfx.fillCircle(cx, cy, towerDef.range);
+      this.hoverGfx.lineStyle(1, towerDef.color, 0.4);
+      this.hoverGfx.strokeCircle(cx, cy, towerDef.range);
+      // cell highlight
+      this.hoverGfx.fillStyle(ok ? 0x00ff00 : 0xff0000, 0.25);
       this.hoverGfx.fillRect(col * CELL, row * CELL, CELL, CELL);
       this.hoverGfx.lineStyle(2, ok ? 0x00ff00 : 0xff0000, 0.8);
       this.hoverGfx.strokeRect(col * CELL, row * CELL, CELL, CELL);
