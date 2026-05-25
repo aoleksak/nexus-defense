@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "start": "npx serve dist -p ${PORT:-3000}"
   },
   "dependencies": {
     "phaser": "^3.60.0"
