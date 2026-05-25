@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { TOWERS } from '../config/towers.js';
 
-const PX = 1040;  // panel x start
-const PW = 240;   // panel width
+const PX = 1040;
+const PW = 240;
 
 export default class UIScene extends Phaser.Scene {
   constructor() {
@@ -37,48 +37,48 @@ export default class UIScene extends Phaser.Scene {
     const x = PX + 14;
     const mono = (size, color = '#00ccff') => ({ fontFamily: 'monospace', fontSize: `${size}px`, color });
 
-    this.add.text(x, 12, 'NEXUS DEFENSE', mono(17, '#ffffff')).setFontStyle('bold');
-    this.add.text(x, 34, '─'.repeat(20), mono(11, '#003377'));
+    this.add.text(x, 10, 'NEXUS DEFENSE', mono(15, '#ffffff')).setFontStyle('bold');
+    this.add.text(x, 28, '─'.repeat(20), mono(10, '#003377'));
 
-    this.livesText    = this.add.text(x, 52,  '♥ Lives: 20',      mono(15));
-    this.creditsText  = this.add.text(x, 74,  '◈ Credits: 150',   mono(15));
-    this.scoreText    = this.add.text(x, 96,  '★ Score: 0',       mono(15));
-    this.waveText     = this.add.text(x, 118, 'Wave: 0 / 8',      mono(15));
-    this.countdownText = this.add.text(x, 140, 'First wave in: 5s', mono(13, '#ffaa00'));
+    this.livesText    = this.add.text(x, 40,  '♥ Lives: 20',      mono(13));
+    this.creditsText  = this.add.text(x, 56,  '◈ Credits: 150',   mono(13));
+    this.scoreText    = this.add.text(x, 72,  '★ Score: 0',       mono(13));
+    this.waveText     = this.add.text(x, 88,  'Wave: 0 / 8',      mono(13));
+    this.countdownText = this.add.text(x, 104, 'First wave in: 5s', mono(11, '#ffaa00'));
 
-    this.add.text(x, 162, '─'.repeat(20), mono(11, '#003377'));
-    this.add.text(x, 178, 'TOWERS', mono(12, '#6666cc'));
+    this.add.text(x, 120, '─'.repeat(20), mono(10, '#003377'));
+    this.add.text(x, 133, 'TOWERS', mono(11, '#6666cc'));
   }
 
   createTowerButtons() {
     const x = PX + 10;
-    let y = 196;
+    let y = 148;
+    const BTN_H = 38;
+    const BTN_STEP = 44;
 
     for (const [key, def] of Object.entries(TOWERS)) {
       const btn = this.add.graphics();
-      const label = this.add.text(x + 34, y + 5, '', { fontFamily: 'monospace', fontSize: '12px', color: '#aabbcc' });
+      const label = this.add.text(x + 28, y + 4, '', { fontFamily: 'monospace', fontSize: '11px', color: '#aabbcc' });
       this.buttons[key] = { btn, label, y, def, key };
       this.drawButton(key, false);
 
-      const zone = this.add.zone(x, y, PW - 20, 50).setOrigin(0).setInteractive();
+      const zone = this.add.zone(x, y, PW - 20, BTN_H).setOrigin(0).setInteractive();
       zone.on('pointerdown', () => this.selectTower(key));
       zone.on('pointerover', () => { if (this.selectedType !== key) this.drawButton(key, true); });
       zone.on('pointerout',  () => { if (this.selectedType !== key) this.drawButton(key, false); });
 
-      y += 56;
+      y += BTN_STEP;
     }
 
-    // Cancel selection
     y += 4;
-    this.add.text(x + 4, y, '[Cancel Selection]', { fontFamily: 'monospace', fontSize: '12px', color: '#556677' })
+    this.add.text(x + 4, y, '[Cancel Selection]', { fontFamily: 'monospace', fontSize: '11px', color: '#556677' })
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.selectTower(null))
       .on('pointerover', function() { this.setColor('#aabbcc'); })
       .on('pointerout',  function() { this.setColor('#556677'); });
 
-    // Launch wave early
-    y += 28;
-    this.add.text(x + 4, y, '[Launch Wave Now]', { fontFamily: 'monospace', fontSize: '12px', color: '#ff9900' })
+    y += 26;
+    this.add.text(x + 4, y, '[Launch Wave Now]', { fontFamily: 'monospace', fontSize: '11px', color: '#ff9900' })
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         const gs = this.scene.get('GameScene');
@@ -92,20 +92,21 @@ export default class UIScene extends Phaser.Scene {
     const { btn, label, y, def } = this.buttons[key];
     const x = PX + 10;
     const w = PW - 20;
+    const BTN_H = 38;
     const selected = this.selectedType === key;
 
     btn.clear();
     btn.fillStyle(selected ? 0x112244 : hover ? 0x0b1428 : 0x060614);
-    btn.fillRect(x, y, w, 50);
+    btn.fillRect(x, y, w, BTN_H);
     btn.lineStyle(selected ? 2 : 1, selected ? def.color : hover ? 0x334455 : 0x1a2233);
-    btn.strokeRect(x, y, w, 50);
+    btn.strokeRect(x, y, w, BTN_H);
 
     btn.fillStyle(def.color);
-    btn.fillCircle(x + 17, y + 25, 11);
+    btn.fillCircle(x + 14, y + BTN_H / 2, 9);
     btn.fillStyle(0xffffff, 0.5);
-    btn.fillCircle(x + 13, y + 21, 4);
+    btn.fillCircle(x + 11, y + BTN_H / 2 - 3, 3);
 
-    label.setPosition(x + 34, y + 5);
+    label.setPosition(x + 28, y + 4);
     label.setText(`${def.name}  ${def.cost}◈\n${def.description}`);
     label.setColor(selected ? '#ffffff' : '#aabbcc');
   }

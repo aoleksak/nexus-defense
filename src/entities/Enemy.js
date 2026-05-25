@@ -20,6 +20,9 @@ export default class Enemy {
     this.reached = false;
     this.slowFactor = 1;
     this.slowTimer = 0;
+    this.frozen = false;
+    this.frozenTimer = 0;
+    this.shatterBonus = false;
 
     this.x = pathPoints[0].x;
     this.y = pathPoints[0].y;
@@ -31,6 +34,14 @@ export default class Enemy {
 
   draw() {
     this.gfx.clear();
+
+    if (this.frozen) {
+      this.gfx.fillStyle(0x88eeff, 0.3);
+      this.gfx.fillCircle(this.x, this.y, this.size + 6);
+      this.gfx.lineStyle(2, 0x88eeff, 0.9);
+      this.gfx.strokeCircle(this.x, this.y, this.size + 3);
+    }
+
     this.gfx.fillStyle(this.color, 0.25);
     this.gfx.fillCircle(this.x, this.y, this.size + 5);
     this.gfx.fillStyle(this.color);
@@ -53,6 +64,17 @@ export default class Enemy {
 
   update(delta) {
     if (!this.alive || this.reached) return;
+
+    if (this.frozenTimer > 0) {
+      this.frozenTimer -= delta;
+      if (this.frozenTimer <= 0) {
+        this.frozen = false;
+        this.frozenTimer = 0;
+        this.shatterBonus = false;
+      }
+      this.draw();
+      return;
+    }
 
     if (this.slowTimer > 0) {
       this.slowTimer -= delta;
@@ -81,13 +103,26 @@ export default class Enemy {
   }
 
   takeDamage(amount) {
-    this.health -= amount;
+    let dmg = amount;
+    if (this.frozen && this.shatterBonus) {
+      dmg *= 2;
+      this.shatterBonus = false;
+    }
+    this.health -= dmg;
     if (this.health <= 0) { this.health = 0; this.alive = false; }
   }
 
   applySlow(factor, duration) {
     if (factor < this.slowFactor) this.slowFactor = factor;
     if (duration > this.slowTimer) this.slowTimer = duration;
+  }
+
+  applyFreeze(duration) {
+    this.frozen = true;
+    this.frozenTimer = Math.max(this.frozenTimer, duration);
+    this.shatterBonus = true;
+    this.slowFactor = 1;
+    this.slowTimer = 0;
   }
 
   destroy() {

@@ -9,6 +9,7 @@ export default class Projectile {
     this.color = config.color;
     this.splashRadius = config.splashRadius || 0;
     this.slow = config.slow || null;
+    this.freeze = config.freeze || null;
     this.active = true;
 
     this.gfx = scene.add.graphics().setDepth(7);
@@ -51,6 +52,7 @@ export default class Projectile {
         if (Math.sqrt(dx * dx + dy * dy) <= this.splashRadius) {
           e.takeDamage(this.damage);
           if (this.slow) e.applySlow(this.slow.factor, this.slow.duration);
+          if (this.freeze) e.applyFreeze(this.freeze.duration);
         }
       }
       const fx = this.scene.add.graphics().setDepth(7);
@@ -60,6 +62,7 @@ export default class Projectile {
     } else {
       this.target.takeDamage(this.damage);
       if (this.slow) this.target.applySlow(this.slow.factor, this.slow.duration);
+      if (this.freeze) this.target.applyFreeze(this.freeze.duration);
     }
   }
 
