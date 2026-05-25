@@ -14,15 +14,18 @@ export default class UIScene extends Phaser.Scene {
   create() {
     this.selectedType = null;
     this.buttons = {};
+    this.selectedTower = null;
 
     this.drawPanel();
     this.createStats();
     this.createTowerButtons();
+    this.createUpgradePanel();
 
     this.game.events.on('statsUpdate', this.onStats, this);
     this.game.events.on('waveStart', this.onWaveStart, this);
     this.game.events.on('waveComplete', this.onWaveComplete, this);
     this.game.events.on('gameOver', this.onGameOver, this);
+    this.game.events.on('towerSelect', this.onTowerSelect, this);
   }
 
   drawPanel() {
@@ -161,6 +164,65 @@ export default class UIScene extends Phaser.Scene {
     this.add.text(640, 432, 'Refresh to play again', {
       fontFamily: 'monospace', fontSize: '17px', color: '#666688',
     }).setOrigin(0.5);
+  }
+
+  createUpgradePanel() {
+    const x = PX + 10;
+    const y = 680;
+    const mono = (size, color = '#00ccff') => ({ fontFamily: 'monospace', fontSize: `${size}px`, color });
+
+    this.add.text(x, y, '─'.repeat(20), mono(10, '#003377'));
+    this.upgradeTitleText = this.add.text(x, y + 13, '', mono(11, '#ffffff'));
+    this.upgradeBtn = this.add.text(x, y + 27, '', mono(10, '#ffaa00'))
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.doUpgrade())
+      .on('pointerover', function() { this.setColor('#ffcc44'); })
+      .on('pointerout',  function() { this.setColor('#ffaa00'); });
+    this.sellBtn = this.add.text(x + 118, y + 27, '', mono(10, '#ff6655'))
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.doSell())
+      .on('pointerover', function() { this.setColor('#ff9988'); })
+      .on('pointerout',  function() { this.setColor('#ff6655'); });
+  }
+
+  onTowerSelect(tower) {
+    this.selectedTower = tower;
+    if (!tower) {
+      this.upgradeTitleText.setText('');
+      this.upgradeBtn.setText('');
+      this.sellBtn.setText('');
+      return;
+    }
+    const tiers = ['', 'Mk I', 'Mk II', 'Mk III'];
+    this.upgradeTitleText.setText(`${tower.def.name} ${tiers[tower.tier]}`);
+    const cost = tower.upgradeCost();
+    this.upgradeBtn.setText(cost ? `[Upgrade: ${cost}◈]` : '[Max Tier]');
+    this.sellBtn.setText(`[Sell: ${tower.sellValue()}◈]`);
+  }
+
+  doUpgrade() {
+    if (!this.selectedTower) return;
+    const cost = this.selectedTower.upgradeCost();
+    if (!cost) return;
+    const gs = this.scene.get('GameScene');
+    if (gs.credits < cost) return;
+    gs.credits -= cost;
+    this.selectedTower.upgrade();
+    gs.pushStats();
+    this.onTowerSelect(this.selectedTower);
+  }
+
+  doSell() {
+    if (!this.selectedTower) return;
+    const gs = this.scene.get('GameScene');
+    gs.credits += this.selectedTower.sellValue();
+    const idx = gs.towers.indexOf(this.selectedTower);
+    if (idx >= 0) gs.towers.splice(idx, 1);
+    this.selectedTower.destroy();
+    this.selectedTower = null;
+    gs.selectedTower = null;
+    gs.pushStats();
+    this.onTowerSelect(null);
   }
 
   flash(msg, color) {

@@ -13,9 +13,12 @@ export default class Tower {
 
     const def = TOWERS[type];
     this.def = def;
+    this.damage = def.damage;
     this.range = def.range;
     this.fireRate = def.fireRate;
     this.color = def.color;
+    this.tier = 1;
+    this.totalSpent = def.cost;
 
     this.x = col * CELL + CELL / 2;
     this.y = row * CELL + CELL / 2;
@@ -56,6 +59,11 @@ export default class Tower {
     this.gfx.fillCircle(this.x, this.y, h * 0.45);
     this.gfx.fillStyle(0xffffff, 0.7);
     this.gfx.fillCircle(this.x, this.y, h * 0.18);
+
+    if (this.tier >= 2) {
+      this.gfx.lineStyle(this.tier >= 3 ? 2 : 1, this.tier >= 3 ? 0xffdd44 : 0xaaaaaa, 0.9);
+      this.gfx.strokeCircle(this.x, this.y, h - 1);
+    }
 
     if (this.type === 'nanite' || this.type === 'supportRelay') return;
 
@@ -128,7 +136,7 @@ export default class Tower {
     const def = this.def;
     projectiles.push(new Projectile(this.scene, this.x, this.y, target, {
       speed: def.projectileSpeed,
-      damage: def.damage,
+      damage: this.damage,
       color: def.projectileColor,
       splashRadius: def.splashRadius || 0,
       slow: def.slowFactor ? { factor: def.slowFactor, duration: def.slowDuration } : null,
@@ -157,7 +165,7 @@ export default class Tower {
     const g = this.scene.add.graphics().setDepth(7);
     let prev = { x: this.x, y: this.y };
     chain.forEach((e, i) => {
-      e.takeDamage(Math.floor(def.damage * Math.pow(0.7, i)));
+      e.takeDamage(Math.floor(this.damage * Math.pow(0.7, i)));
       g.lineStyle(Math.max(1, 2.5 - i * 0.4), 0x88ccff, 0.9 - i * 0.15);
       g.beginPath();
       g.moveTo(prev.x, prev.y);
@@ -183,7 +191,7 @@ export default class Tower {
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist > this.range) continue;
       if (dx * cos + dy * sin < 0) continue;
-      if (Math.abs(dx * sin - dy * cos) <= 8 + e.size) e.takeDamage(this.def.damage);
+      if (Math.abs(dx * sin - dy * cos) <= 8 + e.size) e.takeDamage(this.damage);
     }
 
     const g = this.scene.add.graphics().setDepth(7);
@@ -207,7 +215,7 @@ export default class Tower {
         this.draw();
         projectiles.push(new Projectile(this.scene, this.x, this.y, target, {
           speed: def.projectileSpeed,
-          damage: def.damage,
+          damage: this.damage,
           color: def.projectileColor,
         }));
       });
@@ -222,7 +230,7 @@ export default class Tower {
       if (!e.alive) continue;
       const dx = e.x - this.x;
       const dy = e.y - this.y;
-      if (Math.sqrt(dx * dx + dy * dy) <= this.range) e.takeDamage(this.def.damage);
+      if (Math.sqrt(dx * dx + dy * dy) <= this.range) e.takeDamage(this.damage);
     }
     const g = this.scene.add.graphics().setDepth(7);
     g.fillStyle(this.color, 0.14);
@@ -250,6 +258,34 @@ export default class Tower {
         }
       }
     }
+  }
+
+  upgradeCost() {
+    if (this.tier >= 3) return null;
+    return this.tier === 1 ? Math.floor(this.def.cost * 0.6) : Math.floor(this.def.cost * 0.8);
+  }
+
+  sellValue() {
+    return Math.floor(this.totalSpent * 0.5);
+  }
+
+  upgrade() {
+    const cost = this.upgradeCost();
+    if (!cost) return;
+    this.tier++;
+    this.totalSpent += cost;
+    this.damage = Math.floor(this.damage * 1.35);
+    this.range = Math.floor(this.range * 1.15);
+    this.fireRate = Math.floor(this.fireRate * 0.85);
+    if (this._naniteGfx) {
+      this._naniteGfx.destroy();
+      this._naniteGfx = this.scene.add.graphics().setDepth(3);
+      this._naniteGfx.fillStyle(this.def.color, 0.07);
+      this._naniteGfx.fillCircle(this.x, this.y, this.range);
+      this._naniteGfx.lineStyle(1, this.def.color, 0.2);
+      this._naniteGfx.strokeCircle(this.x, this.y, this.range);
+    }
+    this.draw();
   }
 
   destroy() {

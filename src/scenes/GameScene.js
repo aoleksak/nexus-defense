@@ -41,6 +41,7 @@ export default class GameScene extends Phaser.Scene {
     this.spawnQueue = [];
     this.pathCells = new Set();
     this.selectedTowerType = null;
+    this.selectedTower = null;
 
     this.pathPoints = PATH_GRID.map(([c, r]) => gridToPixel(c, r));
     this.buildPathCells();
@@ -177,12 +178,18 @@ export default class GameScene extends Phaser.Scene {
     const row = Math.floor(pointer.y / CELL);
     if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
 
-    if (this.selectedTowerType && !this.isBlocked(col, row)) {
-      const cost = TOWERS[this.selectedTowerType].cost;
-      if (this.credits < cost) return;
-      this.credits -= cost;
-      this.towers.push(new Tower(this, col, row, this.selectedTowerType));
-      this.pushStats();
+    if (this.selectedTowerType) {
+      if (!this.isBlocked(col, row)) {
+        const cost = TOWERS[this.selectedTowerType].cost;
+        if (this.credits < cost) return;
+        this.credits -= cost;
+        this.towers.push(new Tower(this, col, row, this.selectedTowerType));
+        this.pushStats();
+      }
+    } else {
+      const tower = this.towers.find(t => t.col === col && t.row === row) || null;
+      this.selectedTower = tower;
+      this.game.events.emit('towerSelect', tower);
     }
   }
 
