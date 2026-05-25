@@ -1,0 +1,290 @@
+import Phaser from 'phaser';
+import Tower from '../entities/Tower.js';
+import Enemy from '../entities/Enemy.js';
+import { WAVES } from '../config/waves.js';
+import { TOWERS } from '../config/towers.js';
+
+const CELL = 40;
+const PLAY_W = 1040;
+const PLAY_H = 720;
+const COLS = PLAY_W / CELL;  // 26
+const ROWS = PLAY_H / CELL;  // 18
+
+// Path waypoints as [col, row]; col -1 and 26 are off-screen entry/exit
+const PATH_GRID = [
+  [-1, 9], [5, 9], [5, 3], [13, 3], [13, 14], [20, 14], [20, 5], [26, 5],
+];
+
+function gridToPixel(col, row) {
+  return { x: col * CELL + CELL / 2, y: row * CELL + CELL / 2 };
+}
+
+export default class GameScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'GameScene' });
+  }
+
+  create() {
+    this.lives = 20;
+    this.credits = 150;
+    this.score = 0;
+    this.waveIndex = 0;
+    this.waveActive = false;
+    this.nextWaveCountdown = 5000;
+    this.waveTime = 0;
+    this.gameOver = false;
+    this.won = false;
+
+    this.towers = [];
+    this.enemies = [];
+    this.projectiles = [];
+    this.spawnQueue = [];
+    this.pathCells = new Set();
+    this.selectedTowerType = null;
+
+    this.pathPoints = PATH_GRID.map(([c, r]) => gridToPixel(c, r));
+    this.buildPathCells();
+
+    this.drawBackground();
+    this.drawPath();
+    this.drawGrid();
+
+    this.hoverGfx = this.add.graphics().setDepth(8);
+
+    this.input.on('pointermove', this.onHover, this);
+    this.input.on('pointerdown', this.onClick, this);
+
+    this.scene.launch('UIScene');
+  }
+
+  buildPathCells() {
+    for (let i = 0; i < PATH_GRID.length - 1; i++) {
+      const [c1, r1] = PATH_GRID[i];
+      const [c2, r2] = PATH_GRID[i + 1];
+      if (c1 === c2) {
+        for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++) this.pathCells.add(`${c1},${r}`);
+      } else {
+        for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) this.pathCells.add(`${c},${r1}`);
+      }
+    }
+  }
+
+  isBlocked(col, row) {
+    return this.pathCells.has(`${col},${row}`) || this.towers.some(t => t.col === col && t.row === row);
+  }
+
+  drawBackground() {
+    const g = this.add.graphics().setDepth(0);
+    g.fillStyle(0x040410);
+    g.fillRect(0, 0, PLAY_W, PLAY_H);
+    for (let i = 0; i < 120; i++) {
+      g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.7));
+      g.fillRect(Phaser.Math.Between(0, PLAY_W), Phaser.Math.Between(0, PLAY_H), 1, 1);
+    }
+    // Side panel background (UIScene draws on top, this is the base)
+    g.fillStyle(0x080820);
+    g.fillRect(PLAY_W, 0, 1280 - PLAY_W, PLAY_H);
+    g.lineStyle(2, 0x0066ff, 0.6);
+    g.beginPath(); g.moveTo(PLAY_W, 0); g.lineTo(PLAY_W, PLAY_H); g.strokePath();
+  }
+
+  drawGrid() {
+    const g = this.add.graphics().setDepth(1);
+    g.lineStyle(1, 0x0a1a3a, 0.5);
+    for (let c = 0; c <= COLS; c++) {
+      g.beginPath(); g.moveTo(c * CELL, 0); g.lineTo(c * CELL, PLAY_H); g.strokePath();
+    }
+    for (let r = 0; r <= ROWS; r++) {
+      g.beginPath(); g.moveTo(0, r * CELL); g.lineTo(PLAY_W, r * CELL); g.strokePath();
+    }
+  }
+
+  drawPath() {
+    const g = this.add.graphics().setDepth(2);
+    const pts = this.pathPoints;
+
+    const line = (w, color, alpha = 1) => {
+      g.lineStyle(w, color, alpha);
+      g.beginPath();
+      g.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y);
+      g.strokePath();
+    };
+
+    line(CELL, 0x001133);
+    line(CELL - 6, 0x060d1c);
+    line(CELL - 12, 0x070b18);
+    line(2, 0x0033aa, 0.7);
+
+    // Entry arrow (cyan)
+    g.fillStyle(0x00ffff, 0.9);
+    const ep = pts[0];
+    g.fillTriangle(ep.x - 6, ep.y - 8, ep.x - 6, ep.y + 8, ep.x + 10, ep.y);
+
+    // Exit arrow (red)
+    g.fillStyle(0xff3300, 0.9);
+    const xp = pts[pts.length - 1];
+    g.fillTriangle(xp.x - 10, xp.y - 8, xp.x - 10, xp.y + 8, xp.x + 6, xp.y);
+
+    // Direction arrows along path
+    for (let i = 0; i < pts.length - 1; i++) {
+      const mx = (pts[i].x + pts[i + 1].x) / 2;
+      const my = (pts[i].y + pts[i + 1].y) / 2;
+      const a = Math.atan2(pts[i + 1].y - pts[i].y, pts[i + 1].x - pts[i].x);
+      const s = 7;
+      g.fillStyle(0x0044cc, 0.5);
+      g.fillTriangle(
+        mx + Math.cos(a) * s, my + Math.sin(a) * s,
+        mx + Math.cos(a + 2.4) * s * 0.6, my + Math.sin(a + 2.4) * s * 0.6,
+        mx + Math.cos(a - 2.4) * s * 0.6, my + Math.sin(a - 2.4) * s * 0.6
+      );
+    }
+  }
+
+  onHover(pointer) {
+    if (pointer.x >= PLAY_W) { this.hoverGfx.clear(); return; }
+    const col = Math.floor(pointer.x / CELL);
+    const row = Math.floor(pointer.y / CELL);
+    if (col < 0 || col >= COLS || row < 0 || row >= ROWS) { this.hoverGfx.clear(); return; }
+
+    this.hoverGfx.clear();
+    for (const t of this.towers) t.showRange(false);
+
+    if (this.selectedTowerType) {
+      const ok = !this.isBlocked(col, row);
+      this.hoverGfx.fillStyle(ok ? 0x00ff00 : 0xff0000, 0.2);
+      this.hoverGfx.fillRect(col * CELL, row * CELL, CELL, CELL);
+      this.hoverGfx.lineStyle(2, ok ? 0x00ff00 : 0xff0000, 0.8);
+      this.hoverGfx.strokeRect(col * CELL, row * CELL, CELL, CELL);
+    } else {
+      const hovered = this.towers.find(t => t.col === col && t.row === row);
+      if (hovered) hovered.showRange(true);
+    }
+  }
+
+  onClick(pointer) {
+    if (this.gameOver || pointer.x >= PLAY_W) return;
+    const col = Math.floor(pointer.x / CELL);
+    const row = Math.floor(pointer.y / CELL);
+    if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+
+    if (this.selectedTowerType && !this.isBlocked(col, row)) {
+      const cost = TOWERS[this.selectedTowerType].cost;
+      if (this.credits < cost) return;
+      this.credits -= cost;
+      this.towers.push(new Tower(this, col, row, this.selectedTowerType));
+      this.pushStats();
+    }
+  }
+
+  getStats() {
+    return {
+      lives: this.lives,
+      credits: this.credits,
+      score: this.score,
+      wave: this.waveIndex,
+      totalWaves: WAVES.length,
+      countdown: Math.max(0, Math.ceil(this.nextWaveCountdown / 1000)),
+      waveActive: this.waveActive,
+    };
+  }
+
+  pushStats() {
+    this.game.events.emit('statsUpdate', this.getStats());
+  }
+
+  update(time, delta) {
+    if (this.gameOver) return;
+
+    // Wave countdown
+    if (!this.waveActive && this.waveIndex < WAVES.length) {
+      this.nextWaveCountdown -= delta;
+      if (this.nextWaveCountdown <= 0) {
+        this.startWave();
+      }
+    }
+
+    // Spawn from queue
+    if (this.spawnQueue.length > 0) {
+      this.spawnQueue[0].timer -= delta;
+      if (this.spawnQueue[0].timer <= 0) {
+        const entry = this.spawnQueue.shift();
+        this.enemies.push(new Enemy(this, entry.type, this.pathPoints));
+      }
+    }
+
+    // Wave complete when queue empty and all enemies gone
+    if (this.waveActive && this.spawnQueue.length === 0 && this.enemies.length === 0) {
+      this.waveActive = false;
+      this.waveIndex++;
+      this.credits += 50;
+      this.nextWaveCountdown = 8000;
+      this.game.events.emit('waveComplete', this.waveIndex);
+      if (this.waveIndex >= WAVES.length) { this.triggerEnd(true); return; }
+      this.pushStats();
+    }
+
+    // Update enemies
+    for (let i = this.enemies.length - 1; i >= 0; i--) {
+      const e = this.enemies[i];
+      e.update(delta);
+      if (e.reached) {
+        this.lives -= e.livesLost;
+        e.destroy();
+        this.enemies.splice(i, 1);
+        if (this.lives <= 0) { this.lives = 0; this.triggerEnd(false); return; }
+        this.pushStats();
+      } else if (!e.alive) {
+        this.score += e.reward;
+        this.credits += e.reward;
+        e.destroy();
+        this.enemies.splice(i, 1);
+        this.pushStats();
+      }
+    }
+
+    // Update towers
+    for (const t of this.towers) t.update(time, this.enemies, this.projectiles);
+
+    // Update projectiles
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const p = this.projectiles[i];
+      p.update(delta, this.enemies);
+      if (!p.active) { p.destroy(); this.projectiles.splice(i, 1); }
+    }
+
+    // Throttled stats push for countdown display
+    this._statsTick = (this._statsTick || 0) + delta;
+    if (this._statsTick >= 250) { this._statsTick = 0; this.pushStats(); }
+  }
+
+  startWave() {
+    this.waveActive = true;
+    const wave = WAVES[this.waveIndex];
+
+    // Build absolute-time events, then convert to relative delays
+    const events = [];
+    for (const group of wave.enemies) {
+      for (let i = 0; i < group.count; i++) {
+        events.push({ time: i * group.interval, type: group.type });
+      }
+    }
+    events.sort((a, b) => a.time - b.time);
+
+    let prev = 0;
+    this.spawnQueue = events.map(e => {
+      const rel = e.time - prev;
+      prev = e.time;
+      return { timer: rel, type: e.type };
+    });
+
+    this.game.events.emit('waveStart', this.waveIndex + 1);
+    this.pushStats();
+  }
+
+  triggerEnd(won) {
+    this.gameOver = true;
+    this.won = won;
+    this.game.events.emit('gameOver', { won, score: this.score });
+  }
+}
