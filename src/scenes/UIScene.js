@@ -167,37 +167,90 @@ export default class UIScene extends Phaser.Scene {
   }
 
   createUpgradePanel() {
-    const x = PX + 10;
-    const y = 680;
-    const mono = (size, color = '#00ccff') => ({ fontFamily: 'monospace', fontSize: `${size}px`, color });
+    const D = 20;
+    const mono = (size, color) => ({ fontFamily: 'monospace', fontSize: `${size}px`, color });
 
-    this.add.text(x, y, '─'.repeat(20), mono(10, '#003377'));
-    this.upgradeTitleText = this.add.text(x, y + 13, '', mono(11, '#ffffff'));
-    this.upgradeBtn = this.add.text(x, y + 27, '', mono(10, '#ffaa00'))
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => this.doUpgrade())
-      .on('pointerover', function() { this.setColor('#ffcc44'); })
-      .on('pointerout',  function() { this.setColor('#ffaa00'); });
-    this.sellBtn = this.add.text(x + 118, y + 27, '', mono(10, '#ff6655'))
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => this.doSell())
-      .on('pointerover', function() { this.setColor('#ff9988'); })
-      .on('pointerout',  function() { this.setColor('#ff6655'); });
+    this.popupBg       = this.add.graphics().setDepth(D);
+    this.popupTitle    = this.add.text(0, 0, '', mono(12, '#ffffff')).setDepth(D + 1).setFontStyle('bold');
+    this.popupUpgrade  = this.add.text(0, 0, '', mono(11, '#ffaa00')).setDepth(D + 1);
+    this.popupSell     = this.add.text(0, 0, '', mono(11, '#ff6655')).setDepth(D + 1);
+    this.popupClose    = this.add.text(0, 0, '✕', mono(14, '#888899')).setDepth(D + 1);
+
+    // Touch-friendly hit zones (36px tall each)
+    this.popupUpgradeZone = this.add.zone(0, 0, 160, 36).setOrigin(0).setInteractive({ useHandCursor: true }).setDepth(D + 2);
+    this.popupSellZone    = this.add.zone(0, 0, 160, 36).setOrigin(0).setInteractive({ useHandCursor: true }).setDepth(D + 2);
+    this.popupCloseZone   = this.add.zone(0, 0, 36,  36).setOrigin(0).setInteractive({ useHandCursor: true }).setDepth(D + 2);
+
+    this.popupUpgradeZone.on('pointerdown', () => this.doUpgrade());
+    this.popupSellZone   .on('pointerdown', () => this.doSell());
+    this.popupCloseZone  .on('pointerdown', () => this.hidePopup());
+
+    this.popupUpgradeZone.on('pointerover', () => this.popupUpgrade.setColor('#ffcc44'));
+    this.popupUpgradeZone.on('pointerout',  () => this.popupUpgrade.setColor('#ffaa00'));
+    this.popupSellZone   .on('pointerover', () => this.popupSell.setColor('#ff9988'));
+    this.popupSellZone   .on('pointerout',  () => this.popupSell.setColor('#ff6655'));
+    this.popupCloseZone  .on('pointerover', () => this.popupClose.setColor('#ddddee'));
+    this.popupCloseZone  .on('pointerout',  () => this.popupClose.setColor('#888899'));
+
+    this.hidePopup();
+  }
+
+  showPopup(tower) {
+    const W = 172, H = 100;
+    let px = tower.x + 26;
+    let py = tower.y - H - 10;
+    if (px + W > 1030) px = tower.x - W - 26;
+    if (py < 4) py = tower.y + 32;
+    if (py + H > 716) py = 716 - H;
+
+    const tiers = ['', 'Mk I', 'Mk II', 'Mk III'];
+    const cost = tower.upgradeCost();
+
+    this.popupBg.clear();
+    this.popupBg.fillStyle(0x060618, 0.97);
+    this.popupBg.fillRect(px, py, W, H);
+    this.popupBg.lineStyle(2, tower.color, 0.9);
+    this.popupBg.strokeRect(px, py, W, H);
+    this.popupBg.lineStyle(1, tower.color, 0.25);
+    this.popupBg.beginPath();
+    this.popupBg.moveTo(px + 1, py + 28);
+    this.popupBg.lineTo(px + W - 1, py + 28);
+    this.popupBg.strokePath();
+    this.popupBg.setVisible(true);
+
+    this.popupTitle .setPosition(px + 10, py + 7) .setText(`${tower.def.name} ${tiers[tower.tier]}`).setVisible(true);
+    this.popupClose .setPosition(px + W - 22, py + 5).setVisible(true);
+    this.popupCloseZone.setPosition(px + W - 34, py).setVisible(true);
+
+    const mkLabel = ['', 'II', 'III'][tower.tier];
+    this.popupUpgrade
+      .setPosition(px + 10, py + 38)
+      .setText(cost ? `[Upgrade to Mk ${mkLabel}: ${cost}◈]` : '[Max Tier]')
+      .setColor(cost ? '#ffaa00' : '#556677')
+      .setVisible(true);
+    this.popupUpgradeZone.setPosition(px + 4, py + 30).setVisible(true);
+
+    this.popupSell
+      .setPosition(px + 10, py + 64)
+      .setText(`[Sell for +${tower.sellValue()}◈]`)
+      .setVisible(true);
+    this.popupSellZone.setPosition(px + 4, py + 58).setVisible(true);
+  }
+
+  hidePopup() {
+    this.popupBg.clear().setVisible(false);
+    [this.popupTitle, this.popupUpgrade, this.popupSell, this.popupClose,
+     this.popupUpgradeZone, this.popupSellZone, this.popupCloseZone]
+      .forEach(o => o.setVisible(false));
+    this.selectedTower = null;
+    const gs = this.scene.get('GameScene');
+    if (gs) gs.selectedTower = null;
   }
 
   onTowerSelect(tower) {
     this.selectedTower = tower;
-    if (!tower) {
-      this.upgradeTitleText.setText('');
-      this.upgradeBtn.setText('');
-      this.sellBtn.setText('');
-      return;
-    }
-    const tiers = ['', 'Mk I', 'Mk II', 'Mk III'];
-    this.upgradeTitleText.setText(`${tower.def.name} ${tiers[tower.tier]}`);
-    const cost = tower.upgradeCost();
-    this.upgradeBtn.setText(cost ? `[Upgrade: ${cost}◈]` : '[Max Tier]');
-    this.sellBtn.setText(`[Sell: ${tower.sellValue()}◈]`);
+    if (!tower) { this.hidePopup(); return; }
+    this.showPopup(tower);
   }
 
   doUpgrade() {
@@ -209,7 +262,7 @@ export default class UIScene extends Phaser.Scene {
     gs.credits -= cost;
     this.selectedTower.upgrade();
     gs.pushStats();
-    this.onTowerSelect(this.selectedTower);
+    this.showPopup(this.selectedTower);
   }
 
   doSell() {
@@ -219,10 +272,8 @@ export default class UIScene extends Phaser.Scene {
     const idx = gs.towers.indexOf(this.selectedTower);
     if (idx >= 0) gs.towers.splice(idx, 1);
     this.selectedTower.destroy();
-    this.selectedTower = null;
-    gs.selectedTower = null;
+    this.hidePopup();
     gs.pushStats();
-    this.onTowerSelect(null);
   }
 
   flash(msg, color) {

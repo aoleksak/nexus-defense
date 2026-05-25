@@ -9,4 +9,8 @@ new Phaser.Game({
   backgroundColor: '#040410',
   scene: [GameScene, UIScene],
   parent: document.body,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
 });
