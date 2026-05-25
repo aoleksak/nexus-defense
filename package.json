@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "npx serve dist -p ${PORT:-3000}"
+    "start": "vite preview --host 0.0.0.0 --port ${PORT:-3000}"
   },
   "dependencies": {
     "phaser": "^3.60.0"
@@ -13,10 +13,5 @@
   "devDependencies": {
     "@railway/cli": "^4.61.1",
     "vite": "^5.0.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   }
 }
