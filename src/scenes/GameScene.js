@@ -48,7 +48,9 @@ export default class GameScene extends Phaser.Scene {
 
     this.drawBackground();
     this.drawPath();
+    this.addPathTiles();
     this.drawGrid();
+    this.scatterDecor();
 
     this.hoverGfx = this.add.graphics().setDepth(8);
 
@@ -158,6 +160,44 @@ export default class GameScene extends Phaser.Scene {
         mx + Math.cos(a + 2.4) * s * 0.6, my + Math.sin(a + 2.4) * s * 0.6,
         mx + Math.cos(a - 2.4) * s * 0.6, my + Math.sin(a - 2.4) * s * 0.6
       );
+    }
+  }
+
+  addPathTiles() {
+    if (!this.textures.exists('tile_dirt')) return;
+    for (let i = 0; i < this.pathPoints.length - 1; i++) {
+      const p1 = this.pathPoints[i];
+      const p2 = this.pathPoints[i + 1];
+      const cx = (p1.x + p2.x) / 2;
+      const cy = (p1.y + p2.y) / 2;
+      const w  = Math.abs(p2.x - p1.x) + CELL;
+      const h  = Math.abs(p2.y - p1.y) + CELL;
+      this.add.tileSprite(cx, cy, w, h, 'tile_dirt').setDepth(2).setAlpha(0.55);
+    }
+  }
+
+  scatterDecor() {
+    if (this.textures.exists('plant')) {
+      for (let i = 0; i < 24; i++) {
+        const col = Phaser.Math.Between(1, COLS - 2);
+        const row = Phaser.Math.Between(11, ROWS - 2);
+        if (!this.pathCells.has(`${col},${row}`)) {
+          const { x, y } = gridToPixel(col, row);
+          this.add.image(x, y - 2, 'plant')
+            .setDepth(2)
+            .setScale(Phaser.Math.FloatBetween(0.32, 0.62))
+            .setAlpha(Phaser.Math.FloatBetween(0.5, 0.8));
+        }
+      }
+    }
+    if (this.textures.exists('basin')) {
+      const spots = [[3, 13], [17, 12]];
+      for (const [col, row] of spots) {
+        if (!this.pathCells.has(`${col},${row}`)) {
+          const { x, y } = gridToPixel(col, row);
+          this.add.image(x, y, 'basin').setDepth(2).setScale(0.55).setAlpha(0.75);
+        }
+      }
     }
   }
 

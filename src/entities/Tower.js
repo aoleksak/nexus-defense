@@ -51,29 +51,254 @@ export default class Tower {
     this.gfx.clear();
     const h = CELL / 2;
 
-    this.gfx.fillStyle(0x111133);
-    this.gfx.fillRect(this.x - h + 3, this.y - h + 3, CELL - 6, CELL - 6);
-    this.gfx.lineStyle(2, this.color, 0.6);
-    this.gfx.strokeCircle(this.x, this.y, h - 4);
-    this.gfx.fillStyle(this.color, 0.9);
-    this.gfx.fillCircle(this.x, this.y, h * 0.45);
-    this.gfx.fillStyle(0xffffff, 0.7);
-    this.gfx.fillCircle(this.x, this.y, h * 0.18);
+    this.gfx.fillStyle(0x1e1208);
+    this.gfx.fillRect(this.x - h + 2, this.y - h + 2, CELL - 4, CELL - 4);
+
+    switch (this.type) {
+      case 'rifle':      this._drawRifle(h); break;
+      case 'dynamite':   this._drawDynamite(h); break;
+      case 'lasso':      this._drawLasso(h); break;
+      case 'shotgun':    this._drawShotgun(h); break;
+      case 'gatling':    this._drawGatling(h); break;
+      case 'lightning':  this._drawLightning(h); break;
+      case 'blizzard':   this._drawBlizzard(h); break;
+      case 'buffalo':    this._drawBuffalo(h); break;
+      case 'fever':      this._drawFever(h); break;
+      case 'howitzer':   this._drawHowitzer(h); break;
+      case 'watchtower': this._drawWatchtower(h); break;
+    }
 
     if (this.tier >= 2) {
       this.gfx.lineStyle(this.tier >= 3 ? 2 : 1, this.tier >= 3 ? 0xffdd44 : 0xaaaaaa, 0.9);
       this.gfx.strokeCircle(this.x, this.y, h - 1);
     }
+  }
 
-    if (this.type === 'fever' || this.type === 'watchtower') return;
-
-    const bLen = h * 0.75;
-    const thick = this.type === 'gatling' ? 4 : this.type === 'buffalo' ? 5 : 3;
+  _barrel(len, thick) {
     this.gfx.lineStyle(thick, this.color);
     this.gfx.beginPath();
     this.gfx.moveTo(this.x, this.y);
-    this.gfx.lineTo(this.x + Math.cos(this.angle) * bLen, this.y + Math.sin(this.angle) * bLen);
+    this.gfx.lineTo(this.x + Math.cos(this.angle) * len, this.y + Math.sin(this.angle) * len);
     this.gfx.strokePath();
+  }
+
+  _drawRifle(h) {
+    this.gfx.fillStyle(0x4a2e0a);
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2;
+      this.gfx.fillEllipse(this.x + Math.cos(a) * (h - 6), this.y + Math.sin(a) * (h - 6), 10, 7);
+    }
+    this.gfx.fillStyle(this.color, 0.85);
+    this.gfx.fillCircle(this.x, this.y, h * 0.35);
+    this._barrel(h * 0.95, 2);
+    this.gfx.fillStyle(0x887700);
+    this.gfx.fillCircle(
+      this.x + Math.cos(this.angle) * h * 0.45,
+      this.y + Math.sin(this.angle) * h * 0.45, 2.5
+    );
+  }
+
+  _drawDynamite(h) {
+    this.gfx.fillStyle(0xaa1a00);
+    this.gfx.fillRect(this.x - 7, this.y - 10, 14, 18);
+    this.gfx.fillStyle(0x222222);
+    this.gfx.fillRect(this.x - 8, this.y - 6, 16, 3);
+    this.gfx.fillRect(this.x - 8, this.y + 3, 16, 3);
+    this.gfx.fillStyle(this.color, 0.85);
+    this.gfx.fillRect(this.x - 5, this.y - 3, 10, 5);
+    this.gfx.lineStyle(2, 0x886633);
+    this.gfx.beginPath();
+    this.gfx.moveTo(this.x + 3, this.y - 10);
+    this.gfx.lineTo(this.x + 8, this.y - 17);
+    this.gfx.strokePath();
+    this.gfx.fillStyle(0xffee00);
+    this.gfx.fillCircle(this.x + 8, this.y - 17, 3);
+  }
+
+  _drawLasso(h) {
+    this.gfx.fillStyle(0x6b3a1f);
+    this.gfx.fillRect(this.x - 2, this.y - h + 4, 4, CELL - 8);
+    this.gfx.lineStyle(2, this.color, 0.85);
+    this.gfx.strokeCircle(this.x, this.y, h * 0.5);
+    this.gfx.lineStyle(1, this.color, 0.45);
+    this.gfx.strokeCircle(this.x, this.y, h * 0.72);
+    const lx = this.x + Math.cos(this.angle) * (h - 3);
+    const ly = this.y + Math.sin(this.angle) * (h - 3);
+    this.gfx.lineStyle(2, this.color, 0.9);
+    this.gfx.strokeCircle(lx, ly, 5);
+    this.gfx.lineStyle(1, this.color, 0.6);
+    this.gfx.beginPath();
+    this.gfx.moveTo(this.x, this.y);
+    this.gfx.lineTo(lx, ly);
+    this.gfx.strokePath();
+  }
+
+  _drawShotgun(h) {
+    this.gfx.fillStyle(0x3d2008);
+    this.gfx.fillRect(this.x - h + 4, this.y - h + 4, CELL - 8, CELL - 8);
+    this.gfx.lineStyle(1, 0x6b4a1f, 0.8);
+    this.gfx.strokeRect(this.x - h + 4, this.y - h + 4, CELL - 8, CELL - 8);
+    const perpX = -Math.sin(this.angle) * 3;
+    const perpY =  Math.cos(this.angle) * 3;
+    const bLen = h * 0.8;
+    this.gfx.lineStyle(3, this.color);
+    this.gfx.beginPath();
+    this.gfx.moveTo(this.x + perpX, this.y + perpY);
+    this.gfx.lineTo(this.x + perpX + Math.cos(this.angle) * bLen, this.y + perpY + Math.sin(this.angle) * bLen);
+    this.gfx.strokePath();
+    this.gfx.beginPath();
+    this.gfx.moveTo(this.x - perpX, this.y - perpY);
+    this.gfx.lineTo(this.x - perpX + Math.cos(this.angle) * bLen, this.y - perpY + Math.sin(this.angle) * bLen);
+    this.gfx.strokePath();
+  }
+
+  _drawGatling(h) {
+    this.gfx.fillStyle(0x1a1a1a);
+    this.gfx.fillCircle(this.x, this.y, h - 3);
+    this.gfx.lineStyle(2, this.color, 0.6);
+    this.gfx.strokeCircle(this.x, this.y, h - 3);
+    this.gfx.fillStyle(this.color);
+    for (let i = 0; i < 6; i++) {
+      const a = this.angle + (i / 6) * Math.PI * 2;
+      this.gfx.fillCircle(this.x + Math.cos(a) * (h * 0.45), this.y + Math.sin(a) * (h * 0.45), 3);
+    }
+    this.gfx.fillStyle(0x555555);
+    this.gfx.fillCircle(this.x, this.y, 4.5);
+    this.gfx.fillStyle(this.color, 0.8);
+    this.gfx.fillCircle(this.x, this.y, 2);
+  }
+
+  _drawLightning(h) {
+    this.gfx.fillStyle(0x0a1833);
+    this.gfx.fillCircle(this.x, this.y, h - 3);
+    this.gfx.lineStyle(2, this.color, 0.8);
+    this.gfx.strokeCircle(this.x, this.y, h - 3);
+    this.gfx.lineStyle(1, this.color, 0.35);
+    this.gfx.strokeCircle(this.x, this.y, h * 0.55);
+    this.gfx.lineStyle(3, this.color);
+    this.gfx.beginPath();
+    this.gfx.moveTo(this.x, this.y + 4);
+    this.gfx.lineTo(this.x, this.y - h + 2);
+    this.gfx.strokePath();
+    this.gfx.fillStyle(0xffffff, 0.95);
+    this.gfx.fillCircle(this.x, this.y - h + 2, 2.5);
+  }
+
+  _drawBlizzard(h) {
+    this.gfx.fillStyle(0x0d1f2d);
+    this.gfx.fillCircle(this.x, this.y, h - 3);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const tip = { x: this.x + Math.cos(a) * (h - 4), y: this.y + Math.sin(a) * (h - 4) };
+      this.gfx.lineStyle(2, this.color, 0.9);
+      this.gfx.beginPath();
+      this.gfx.moveTo(this.x, this.y);
+      this.gfx.lineTo(tip.x, tip.y);
+      this.gfx.strokePath();
+      const cbR = (h - 4) * 0.5;
+      const cbX = this.x + Math.cos(a) * cbR;
+      const cbY = this.y + Math.sin(a) * cbR;
+      this.gfx.lineStyle(1, this.color, 0.6);
+      this.gfx.beginPath();
+      this.gfx.moveTo(cbX + Math.cos(a + Math.PI / 6) * 4, cbY + Math.sin(a + Math.PI / 6) * 4);
+      this.gfx.lineTo(cbX + Math.cos(a - Math.PI / 6) * 4, cbY + Math.sin(a - Math.PI / 6) * 4);
+      this.gfx.strokePath();
+      this.gfx.fillStyle(this.color, 0.8);
+      this.gfx.fillCircle(tip.x, tip.y, 2);
+    }
+    this.gfx.fillStyle(0xeeffff);
+    this.gfx.fillCircle(this.x, this.y, 3.5);
+  }
+
+  _drawBuffalo(h) {
+    this.gfx.fillStyle(0x241304);
+    this.gfx.fillRect(this.x - h + 3, this.y - h + 3, CELL - 6, CELL - 6);
+    this.gfx.lineStyle(2, this.color, 0.6);
+    this.gfx.strokeRect(this.x - h + 3, this.y - h + 3, CELL - 6, CELL - 6);
+    this.gfx.fillStyle(this.color, 0.7);
+    for (const [dx, dy] of [[-1,-1],[1,-1],[1,1],[-1,1]]) {
+      this.gfx.fillCircle(this.x + dx * (h - 7), this.y + dy * (h - 7), 2.5);
+    }
+    this._barrel(h * 1.1, 5);
+    const bpX = this.x + Math.cos(this.angle) * h * 0.5;
+    const bpY = this.y + Math.sin(this.angle) * h * 0.5;
+    const perpX = -Math.sin(this.angle) * 5;
+    const perpY =  Math.cos(this.angle) * 5;
+    this.gfx.lineStyle(1, this.color, 0.6);
+    this.gfx.beginPath();
+    this.gfx.moveTo(bpX + perpX, bpY + perpY + 4);
+    this.gfx.lineTo(bpX, bpY);
+    this.gfx.lineTo(bpX - perpX, bpY - perpY + 4);
+    this.gfx.strokePath();
+  }
+
+  _drawFever(h) {
+    this.gfx.fillStyle(0x0d2208);
+    this.gfx.fillCircle(this.x, this.y, h - 3);
+    this.gfx.lineStyle(1, this.color, 0.5);
+    this.gfx.strokeCircle(this.x, this.y, h - 3);
+    this.gfx.fillStyle(this.color, 0.9);
+    this.gfx.fillCircle(this.x, this.y - 2, h * 0.38);
+    this.gfx.fillStyle(0x0d2208);
+    this.gfx.fillCircle(this.x - 4, this.y - 4, 2.5);
+    this.gfx.fillCircle(this.x + 4, this.y - 4, 2.5);
+    this.gfx.fillStyle(this.color, 0.8);
+    this.gfx.fillRect(this.x - 5, this.y + 3, 10, 5);
+    this.gfx.fillStyle(0x0d2208);
+    for (let i = 0; i < 3; i++) this.gfx.fillRect(this.x - 4 + i * 3, this.y + 4, 2, 3);
+  }
+
+  _drawHowitzer(h) {
+    this.gfx.fillStyle(0x2a1108);
+    this.gfx.fillRect(this.x - h + 6, this.y - 5, CELL - 12, 10);
+    for (const wX of [this.x - 9, this.x + 9]) {
+      this.gfx.fillStyle(0x3d1a08);
+      this.gfx.fillCircle(wX, this.y + 5, 7);
+      this.gfx.lineStyle(2, 0x6b3311, 0.9);
+      this.gfx.strokeCircle(wX, this.y + 5, 7);
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI;
+        this.gfx.lineStyle(1, 0x6b3311, 0.7);
+        this.gfx.beginPath();
+        this.gfx.moveTo(wX + Math.cos(a) * 6, this.y + 5 + Math.sin(a) * 6);
+        this.gfx.lineTo(wX - Math.cos(a) * 6, this.y + 5 - Math.sin(a) * 6);
+        this.gfx.strokePath();
+      }
+    }
+    this._barrel(h * 0.85, 7);
+    const mX = this.x + Math.cos(this.angle) * (h * 0.85);
+    const mY = this.y + Math.sin(this.angle) * (h * 0.85);
+    this.gfx.fillStyle(0x221108);
+    this.gfx.fillCircle(mX, mY, 5);
+    this.gfx.lineStyle(2, this.color, 0.8);
+    this.gfx.strokeCircle(mX, mY, 5);
+  }
+
+  _drawWatchtower(h) {
+    const legW = 12;
+    this.gfx.lineStyle(2, 0x6b3a1f);
+    this.gfx.beginPath();
+    this.gfx.moveTo(this.x - legW, this.y + h - 3);
+    this.gfx.lineTo(this.x, this.y - h * 0.3);
+    this.gfx.lineTo(this.x + legW, this.y + h - 3);
+    this.gfx.strokePath();
+    this.gfx.lineStyle(1, 0x6b3a1f, 0.7);
+    this.gfx.beginPath();
+    this.gfx.moveTo(this.x - legW * 0.6, this.y + h * 0.25);
+    this.gfx.lineTo(this.x + legW * 0.6, this.y - h * 0.05);
+    this.gfx.strokePath();
+    this.gfx.beginPath();
+    this.gfx.moveTo(this.x + legW * 0.6, this.y + h * 0.25);
+    this.gfx.lineTo(this.x - legW * 0.6, this.y - h * 0.05);
+    this.gfx.strokePath();
+    this.gfx.fillStyle(0x5a2e10);
+    this.gfx.fillRect(this.x - legW - 2, this.y - h + 2, legW * 2 + 4, 8);
+    this.gfx.lineStyle(1, this.color, 0.6);
+    this.gfx.strokeRect(this.x - legW - 2, this.y - h + 2, legW * 2 + 4, 8);
+    this.gfx.fillStyle(this.color, 0.8);
+    for (let i = 0; i < 3; i++) this.gfx.fillRect(this.x - legW + i * 9, this.y - h - 1, 5, 4);
+    this.gfx.fillStyle(0xffdd88, 0.9);
+    this.gfx.fillCircle(this.x, this.y - h + 6, 3);
   }
 
   showRange(visible) {

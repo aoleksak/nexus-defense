@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import PreloadScene from './scenes/PreloadScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
 
@@ -7,7 +8,7 @@ new Phaser.Game({
   width: 1280,
   height: 720,
   backgroundColor: '#040410',
-  scene: [GameScene, UIScene],
+  scene: [PreloadScene, GameScene, UIScene],
   parent: document.body,
   scale: {
     mode: Phaser.Scale.FIT,
