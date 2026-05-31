@@ -76,22 +76,40 @@ export default class GameScene extends Phaser.Scene {
 
   drawBackground() {
     const g = this.add.graphics().setDepth(0);
-    g.fillStyle(0x040410);
+
+    // Night sky gradient (dark brown-black at top, slightly warmer at horizon)
+    g.fillStyle(0x0a0603);
     g.fillRect(0, 0, PLAY_W, PLAY_H);
-    for (let i = 0; i < 120; i++) {
-      g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.1, 0.7));
-      g.fillRect(Phaser.Math.Between(0, PLAY_W), Phaser.Math.Between(0, PLAY_H), 1, 1);
+
+    // Stars (frontier night sky)
+    for (let i = 0; i < 140; i++) {
+      const alpha = Phaser.Math.FloatBetween(0.15, 0.85);
+      const sz = Math.random() < 0.1 ? 2 : 1;
+      g.fillStyle(0xfffde8, alpha);
+      g.fillRect(Phaser.Math.Between(0, PLAY_W), Phaser.Math.Between(0, PLAY_H * 0.65), sz, sz);
     }
-    // Side panel background (UIScene draws on top, this is the base)
-    g.fillStyle(0x080820);
+
+    // Distant mountain silhouettes
+    g.fillStyle(0x150d06);
+    g.fillTriangle(0, 420, 160, 240, 320, 420);
+    g.fillTriangle(200, 420, 390, 210, 580, 420);
+    g.fillTriangle(480, 420, 640, 255, 800, 420);
+    g.fillTriangle(700, 420, 880, 230, 1040, 420);
+
+    // Prairie ground (lower third)
+    g.fillStyle(0x1a1106);
+    g.fillRect(0, 420, PLAY_W, PLAY_H - 420);
+
+    // Side panel background
+    g.fillStyle(0x100a04);
     g.fillRect(PLAY_W, 0, 1280 - PLAY_W, PLAY_H);
-    g.lineStyle(2, 0x0066ff, 0.6);
+    g.lineStyle(2, 0xaa7722, 0.7);
     g.beginPath(); g.moveTo(PLAY_W, 0); g.lineTo(PLAY_W, PLAY_H); g.strokePath();
   }
 
   drawGrid() {
     const g = this.add.graphics().setDepth(1);
-    g.lineStyle(1, 0x0a1a3a, 0.5);
+    g.lineStyle(1, 0x251708, 0.5);
     for (let c = 0; c <= COLS; c++) {
       g.beginPath(); g.moveTo(c * CELL, 0); g.lineTo(c * CELL, PLAY_H); g.strokePath();
     }
@@ -112,28 +130,29 @@ export default class GameScene extends Phaser.Scene {
       g.strokePath();
     };
 
-    line(CELL, 0x001133);
-    line(CELL - 6, 0x060d1c);
-    line(CELL - 12, 0x070b18);
-    line(2, 0x0033aa, 0.7);
+    // Dirt trail
+    line(CELL, 0x2a1a0a);
+    line(CELL - 6, 0x3d2510);
+    line(CELL - 12, 0x4a2d12);
+    line(2, 0x8b6914, 0.6);
 
-    // Entry arrow (cyan)
-    g.fillStyle(0x00ffff, 0.9);
+    // Entry arrow (gold — wagon enters from the east)
+    g.fillStyle(0xd4a843, 0.9);
     const ep = pts[0];
     g.fillTriangle(ep.x - 6, ep.y - 8, ep.x - 6, ep.y + 8, ep.x + 10, ep.y);
 
-    // Exit arrow (red)
-    g.fillStyle(0xff3300, 0.9);
+    // Exit arrow (red — settlers lost)
+    g.fillStyle(0xcc3322, 0.9);
     const xp = pts[pts.length - 1];
     g.fillTriangle(xp.x - 10, xp.y - 8, xp.x - 10, xp.y + 8, xp.x + 6, xp.y);
 
-    // Direction arrows along path
+    // Direction arrows along trail
     for (let i = 0; i < pts.length - 1; i++) {
       const mx = (pts[i].x + pts[i + 1].x) / 2;
       const my = (pts[i].y + pts[i + 1].y) / 2;
       const a = Math.atan2(pts[i + 1].y - pts[i].y, pts[i + 1].x - pts[i].x);
       const s = 7;
-      g.fillStyle(0x0044cc, 0.5);
+      g.fillStyle(0x8b6914, 0.45);
       g.fillTriangle(
         mx + Math.cos(a) * s, my + Math.sin(a) * s,
         mx + Math.cos(a + 2.4) * s * 0.6, my + Math.sin(a + 2.4) * s * 0.6,

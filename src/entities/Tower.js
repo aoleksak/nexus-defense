@@ -33,14 +33,14 @@ export default class Tower {
     this.gfx = scene.add.graphics().setDepth(4);
     this.rangeGfx = scene.add.graphics().setDepth(3);
 
-    if (type === 'nanite') {
+    if (type === 'fever') {
       this._naniteGfx = scene.add.graphics().setDepth(3);
       this._naniteGfx.fillStyle(def.color, 0.07);
       this._naniteGfx.fillCircle(this.x, this.y, def.range);
       this._naniteGfx.lineStyle(1, def.color, 0.2);
       this._naniteGfx.strokeCircle(this.x, this.y, def.range);
     }
-    if (type === 'supportRelay') {
+    if (type === 'watchtower') {
       this._relayGfx = scene.add.graphics().setDepth(3);
     }
 
@@ -65,10 +65,10 @@ export default class Tower {
       this.gfx.strokeCircle(this.x, this.y, h - 1);
     }
 
-    if (this.type === 'nanite' || this.type === 'supportRelay') return;
+    if (this.type === 'fever' || this.type === 'watchtower') return;
 
     const bLen = h * 0.75;
-    const thick = this.type === 'minigun' ? 4 : this.type === 'railgun' ? 5 : 3;
+    const thick = this.type === 'gatling' ? 4 : this.type === 'buffalo' ? 5 : 3;
     this.gfx.lineStyle(thick, this.color);
     this.gfx.beginPath();
     this.gfx.moveTo(this.x, this.y);
@@ -83,7 +83,7 @@ export default class Tower {
       this.rangeGfx.fillCircle(this.x, this.y, this.range);
       this.rangeGfx.lineStyle(1, this.color, 0.5);
       this.rangeGfx.strokeCircle(this.x, this.y, this.range);
-      if (this.type === 'artillery' && this.def.minRange) {
+      if (this.type === 'howitzer' && this.def.minRange) {
         this.rangeGfx.lineStyle(1, 0xff4444, 0.4);
         this.rangeGfx.strokeCircle(this.x, this.y, this.def.minRange);
       }
@@ -103,7 +103,7 @@ export default class Tower {
       const dy = e.y - this.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist > this.range) continue;
-      if (this.type === 'artillery' && this.def.minRange && dist < this.def.minRange) continue;
+      if (this.type === 'howitzer' && this.def.minRange && dist < this.def.minRange) continue;
       const progress = e.pathIndex + (e.pathIndex < e.pathPoints.length - 1
         ? 1 - Phaser.Math.Distance.Between(e.x, e.y, e.pathPoints[e.pathIndex + 1].x, e.pathPoints[e.pathIndex + 1].y) / CELL
         : 0);
@@ -113,8 +113,8 @@ export default class Tower {
   }
 
   update(time, enemies, projectiles) {
-    if (this.type === 'nanite') { this._updateNanite(time, enemies); return; }
-    if (this.type === 'supportRelay') { this._updateRelay(time); return; }
+    if (this.type === 'fever') { this._updateNanite(time, enemies); return; }
+    if (this.type === 'watchtower') { this._updateRelay(time); return; }
     if (this._burstFiring) return;
 
     if (time - this.lastFire < this._effectiveFireRate(time)) return;
@@ -126,9 +126,9 @@ export default class Tower {
     this.draw();
     this.lastFire = time;
 
-    if (this.type === 'tesla') this._fireTesla(target, enemies);
-    else if (this.type === 'railgun') this._fireRailgun(target, enemies);
-    else if (this.type === 'minigun') this._fireMinigun(target, projectiles);
+    if (this.type === 'lightning') this._fireTesla(target, enemies);
+    else if (this.type === 'buffalo') this._fireRailgun(target, enemies);
+    else if (this.type === 'gatling') this._fireMinigun(target, projectiles);
     else this._fireStandard(target, projectiles);
   }
 

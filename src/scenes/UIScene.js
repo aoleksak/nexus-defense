@@ -30,27 +30,27 @@ export default class UIScene extends Phaser.Scene {
 
   drawPanel() {
     const g = this.add.graphics();
-    g.fillStyle(0x080820);
+    g.fillStyle(0x100a04);
     g.fillRect(PX, 0, PW, 720);
-    g.lineStyle(2, 0x0066ff, 0.6);
+    g.lineStyle(2, 0xaa7722, 0.6);
     g.beginPath(); g.moveTo(PX, 0); g.lineTo(PX, 720); g.strokePath();
   }
 
   createStats() {
     const x = PX + 14;
-    const mono = (size, color = '#00ccff') => ({ fontFamily: 'monospace', fontSize: `${size}px`, color });
+    const mono = (size, color = '#d4a843') => ({ fontFamily: 'monospace', fontSize: `${size}px`, color });
 
-    this.add.text(x, 10, 'NEXUS DEFENSE', mono(15, '#ffffff')).setFontStyle('bold');
-    this.add.text(x, 28, '─'.repeat(20), mono(10, '#003377'));
+    this.add.text(x, 10, "TRAIL'S END", mono(15, '#f5e6c8')).setFontStyle('bold');
+    this.add.text(x, 28, '─'.repeat(20), mono(10, '#3d2005'));
 
-    this.livesText    = this.add.text(x, 40,  '♥ Lives: 20',      mono(13));
-    this.creditsText  = this.add.text(x, 56,  '◈ Credits: 150',   mono(13));
-    this.scoreText    = this.add.text(x, 72,  '★ Score: 0',       mono(13));
-    this.waveText     = this.add.text(x, 88,  'Wave: 0 / 8',      mono(13));
-    this.countdownText = this.add.text(x, 104, 'First wave in: 5s', mono(11, '#ffaa00'));
+    this.livesText    = this.add.text(x, 40,  '♥ Settlers: 20',    mono(13));
+    this.creditsText  = this.add.text(x, 56,  '$ Provisions: 150', mono(13));
+    this.scoreText    = this.add.text(x, 72,  '★ Miles: 0',        mono(13));
+    this.waveText     = this.add.text(x, 88,  'Day: 0 / 8',        mono(13));
+    this.countdownText = this.add.text(x, 104, 'Raiders attack in: 5s', mono(11, '#ffaa00'));
 
-    this.add.text(x, 120, '─'.repeat(20), mono(10, '#003377'));
-    this.add.text(x, 133, 'TOWERS', mono(11, '#6666cc'));
+    this.add.text(x, 120, '─'.repeat(20), mono(10, '#3d2005'));
+    this.add.text(x, 133, 'DEFENSES', mono(11, '#aa7733'));
   }
 
   createTowerButtons() {
@@ -61,7 +61,7 @@ export default class UIScene extends Phaser.Scene {
 
     for (const [key, def] of Object.entries(TOWERS)) {
       const btn = this.add.graphics();
-      const label = this.add.text(x + 28, y + 4, '', { fontFamily: 'monospace', fontSize: '11px', color: '#aabbcc' });
+      const label = this.add.text(x + 28, y + 4, '', { fontFamily: 'monospace', fontSize: '11px', color: '#c8aa77' });
       this.buttons[key] = { btn, label, y, def, key };
       this.drawButton(key, false);
 
@@ -74,21 +74,21 @@ export default class UIScene extends Phaser.Scene {
     }
 
     y += 4;
-    this.add.text(x + 4, y, '[Cancel Selection]', { fontFamily: 'monospace', fontSize: '11px', color: '#556677' })
+    this.add.text(x + 4, y, '[Cancel Selection]', { fontFamily: 'monospace', fontSize: '11px', color: '#7a6040' })
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.selectTower(null))
-      .on('pointerover', function() { this.setColor('#aabbcc'); })
-      .on('pointerout',  function() { this.setColor('#556677'); });
+      .on('pointerover', function() { this.setColor('#c8aa77'); })
+      .on('pointerout',  function() { this.setColor('#7a6040'); });
 
     y += 26;
-    this.add.text(x + 4, y, '[Launch Wave Now]', { fontFamily: 'monospace', fontSize: '11px', color: '#ff9900' })
+    this.add.text(x + 4, y, '[Send Raiders Now]', { fontFamily: 'monospace', fontSize: '11px', color: '#cc6600' })
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         const gs = this.scene.get('GameScene');
         if (!gs.waveActive && gs.waveIndex < 8) gs.nextWaveCountdown = 0;
       })
-      .on('pointerover', function() { this.setColor('#ffcc44'); })
-      .on('pointerout',  function() { this.setColor('#ff9900'); });
+      .on('pointerover', function() { this.setColor('#ffaa33'); })
+      .on('pointerout',  function() { this.setColor('#cc6600'); });
   }
 
   drawButton(key, hover) {
@@ -99,9 +99,9 @@ export default class UIScene extends Phaser.Scene {
     const selected = this.selectedType === key;
 
     btn.clear();
-    btn.fillStyle(selected ? 0x112244 : hover ? 0x0b1428 : 0x060614);
+    btn.fillStyle(selected ? 0x2a1a08 : hover ? 0x1c1005 : 0x130c03);
     btn.fillRect(x, y, w, BTN_H);
-    btn.lineStyle(selected ? 2 : 1, selected ? def.color : hover ? 0x334455 : 0x1a2233);
+    btn.lineStyle(selected ? 2 : 1, selected ? def.color : hover ? 0x5a3a18 : 0x2e1c08);
     btn.strokeRect(x, y, w, BTN_H);
 
     btn.fillStyle(def.color);
@@ -110,8 +110,8 @@ export default class UIScene extends Phaser.Scene {
     btn.fillCircle(x + 11, y + BTN_H / 2 - 3, 3);
 
     label.setPosition(x + 28, y + 4);
-    label.setText(`${def.name}  ${def.cost}◈\n${def.description}`);
-    label.setColor(selected ? '#ffffff' : '#aabbcc');
+    label.setText(`${def.name}  $${def.cost}\n${def.description}`);
+    label.setColor(selected ? '#f5e6c8' : '#c8aa77');
   }
 
   selectTower(type) {
@@ -123,26 +123,26 @@ export default class UIScene extends Phaser.Scene {
   }
 
   onStats(data) {
-    this.livesText.setText(`♥ Lives: ${data.lives}`);
-    this.creditsText.setText(`◈ Credits: ${data.credits}`);
-    this.scoreText.setText(`★ Score: ${data.score}`);
-    this.waveText.setText(`Wave: ${data.wave} / ${data.totalWaves}`);
+    this.livesText.setText(`♥ Settlers: ${data.lives}`);
+    this.creditsText.setText(`$ Provisions: ${data.credits}`);
+    this.scoreText.setText(`★ Miles: ${data.score}`);
+    this.waveText.setText(`Day: ${data.wave} / ${data.totalWaves}`);
 
     if (data.waveActive) {
-      this.countdownText.setText('Wave in progress...').setColor('#ff6600');
+      this.countdownText.setText('Raid in progress...').setColor('#ff6600');
     } else if (data.wave < data.totalWaves) {
-      this.countdownText.setText(`Next wave in: ${data.countdown}s`).setColor('#ffaa00');
+      this.countdownText.setText(`Raiders attack in: ${data.countdown}s`).setColor('#ffaa00');
     } else {
-      this.countdownText.setText('All waves complete!').setColor('#888888');
+      this.countdownText.setText('Trail cleared!').setColor('#888877');
     }
   }
 
   onWaveStart(waveNum) {
-    this.flash(`WAVE ${waveNum}`, 0xff6600);
+    this.flash(`RAID ${waveNum}`, 0xff6600);
   }
 
   onWaveComplete(waveNum) {
-    if (waveNum < 8) this.flash('+50◈  Wave Clear!', 0x00ff88);
+    if (waveNum < 8) this.flash('+50$  Raid Repelled!', 0x88dd44);
   }
 
   onGameOver({ won, score }) {
@@ -150,19 +150,19 @@ export default class UIScene extends Phaser.Scene {
     overlay.fillStyle(0x000000, 0.75);
     overlay.fillRect(0, 0, 1280, 720);
 
-    this.add.text(640, 290, won ? 'VICTORY' : 'DEFEATED', {
-      fontFamily: 'monospace', fontSize: '72px',
-      color: won ? '#00ff88' : '#ff2222',
+    this.add.text(640, 290, won ? 'TRAIL BLAZED!' : 'WAGON LOST', {
+      fontFamily: 'monospace', fontSize: '60px',
+      color: won ? '#d4a843' : '#cc3322',
       fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 6,
     }).setOrigin(0.5);
 
-    this.add.text(640, 385, `Final Score: ${score}`, {
-      fontFamily: 'monospace', fontSize: '28px', color: '#ffffff',
+    this.add.text(640, 385, `Miles Traveled: ${score}`, {
+      fontFamily: 'monospace', fontSize: '28px', color: '#f5e6c8',
     }).setOrigin(0.5);
 
     this.add.text(640, 432, 'Refresh to play again', {
-      fontFamily: 'monospace', fontSize: '17px', color: '#666688',
+      fontFamily: 'monospace', fontSize: '17px', color: '#7a6040',
     }).setOrigin(0.5);
   }
 
@@ -207,7 +207,7 @@ export default class UIScene extends Phaser.Scene {
     const cost = tower.upgradeCost();
 
     this.popupBg.clear();
-    this.popupBg.fillStyle(0x060618, 0.97);
+    this.popupBg.fillStyle(0x1a0e04, 0.97);
     this.popupBg.fillRect(px, py, W, H);
     this.popupBg.lineStyle(2, tower.color, 0.9);
     this.popupBg.strokeRect(px, py, W, H);
@@ -225,14 +225,14 @@ export default class UIScene extends Phaser.Scene {
     const mkLabel = ['', 'II', 'III'][tower.tier];
     this.popupUpgrade
       .setPosition(px + 10, py + 38)
-      .setText(cost ? `[Upgrade to Mk ${mkLabel}: ${cost}◈]` : '[Max Tier]')
+      .setText(cost ? `[Upgrade to Mk ${mkLabel}: $${cost}]` : '[Max Tier]')
       .setColor(cost ? '#ffaa00' : '#556677')
       .setVisible(true);
     this.popupUpgradeZone.setPosition(px + 4, py + 30).setVisible(true);
 
     this.popupSell
       .setPosition(px + 10, py + 64)
-      .setText(`[Sell for +${tower.sellValue()}◈]`)
+      .setText(`[Sell for +$${tower.sellValue()}]`)
       .setVisible(true);
     this.popupSellZone.setPosition(px + 4, py + 58).setVisible(true);
   }

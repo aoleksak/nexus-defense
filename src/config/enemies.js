@@ -1,38 +1,38 @@
 export const ENEMIES = {
-  drone: {
-    name: 'Drone',
+  raider: {
+    name: 'Raider',
     health: 60,
     speed: 110,
     reward: 10,
     livesLost: 1,
-    color: 0xff4444,
+    color: 0xcc3322,
     size: 9,
   },
-  mech: {
-    name: 'Mech',
+  outlaw: {
+    name: 'Outlaw',
     health: 220,
     speed: 65,
     reward: 25,
     livesLost: 2,
-    color: 0xff8800,
+    color: 0xcc6600,
     size: 13,
   },
-  speeder: {
-    name: 'Speeder',
+  scout: {
+    name: 'Scout',
     health: 35,
     speed: 230,
     reward: 15,
     livesLost: 1,
-    color: 0xffff00,
+    color: 0xddaa00,
     size: 7,
   },
-  tank: {
-    name: 'Tank',
+  desperado: {
+    name: 'Desperado',
     health: 650,
     speed: 40,
     reward: 80,
     livesLost: 5,
-    color: 0xff2200,
+    color: 0x881100,
     size: 17,
   },
 };
